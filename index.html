@@ -1,0 +1,123 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PisoWiFi License Key Generator (offline)</title>
+<style>
+:root{--bg:#f4f2f0;--c:#fff;--t:#1a1a24;--m:#6b6b7a;--b:#e4e1de;--a:#635BFF;--g:#12a150;--r:#d92d20;--w:#b45309;--s:#f7f5f3}
+@media(prefers-color-scheme:dark){:root{--bg:#14141b;--c:#1d1d27;--t:#f0f0f5;--m:#9a9aaa;--b:#2c2c3a;--s:#252532}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.45 -apple-system,Segoe UI,Roboto,Inter,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:18px 14px 60px}h1{font-size:21px;margin:6px 0 2px}h1 span{color:var(--a)}
+.sub{color:var(--m);font-size:13px;margin:0 0 16px}.card{background:var(--c);border:1px solid var(--b);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px}.n{background:var(--a);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center;font-size:12px}
+p.h{color:var(--m);font-size:12.5px;margin:0 0 10px}label{display:block;font-size:12.5px;font-weight:600;color:var(--m);margin:10px 0 4px}
+input,textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--b);background:var(--s);color:var(--t);font:inherit}
+input:focus,textarea:focus{outline:none;border-color:var(--a)}
+button{padding:10px 14px;border:0;border-radius:10px;background:var(--a);color:#fff;font:inherit;font-weight:600;cursor:pointer;margin-top:10px}
+button.s{background:var(--s);color:var(--t);border:1px solid var(--b)}button:disabled{opacity:.45;cursor:default}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{margin:0;flex:1;background:var(--s);color:var(--t);border:1px solid var(--b)}.tabs button.on{background:var(--a);color:#fff;border-color:var(--a)}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}.ok{background:#e7f8ee;color:var(--g)}.no{background:#fdecea;color:var(--r)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}.out{background:var(--s);border:1px dashed var(--a);border-radius:12px;padding:12px;word-break:break-all;font-size:14px;margin-top:12px}
+.warn{background:#fff7e6;color:#8a5a00;border:1px solid #f3d38a;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--b)}th{color:var(--m);font-size:11px;text-transform:uppercase}
+.msg{font-size:13px;margin-top:8px}.msg.e{color:var(--r)}.msg.o{color:var(--g)}
+</style></head><body><div class="w">
+<h1><span>piso</span>wifi · License Key Generator</h1>
+<p class="sub">Works completely offline — nothing is sent anywhere. Keep this file and your private key file on YOUR computer only.</p>
+<div id="nocrypto" class="warn" style="display:none">⚠ This browser has no Ed25519 support. Use an up-to-date Chrome, Edge, Firefox or Safari (and open this file directly, not from a web page).</div>
+
+<div class="card"><h2><span class="n">1</span> Signing key <span id="kst" class="pill no">locked</span></h2>
+<p class="h">One signing key for ALL your routers. The router firmware only contains the matching <b>public</b> key, so a router can never create keys itself.</p>
+<div class="tabs"><button id="tN" class="on" onclick="mode('N')">Create new key pair</button><button id="tO" onclick="mode('O')">Open my private key file</button></div>
+<div id="pN"><label>Passphrase to protect the private key file (min 8 characters)</label><input id="p1" type="password" autocomplete="new-password">
+<label>Repeat passphrase</label><input id="p2" type="password" autocomplete="new-password"><button onclick="mkPair()">Create key pair &amp; download private key file</button></div>
+<div id="pO" style="display:none"><label>Private key file (pisowifi-license-PRIVATE.json)</label><input id="pf" type="file" accept=".json,application/json">
+<label>Passphrase</label><input id="p3" type="password" autocomplete="current-password" onkeydown="if(event.key=='Enter')openPair()"><button onclick="openPair()">Unlock</button></div>
+<div id="kmsg" class="msg"></div>
+<div id="pubbox" style="display:none"><label>Public key — put this file into the firmware as <code>overlay/usr/lib/pisowifi/license.pub</code> (then rebuild / run update-fix.sh)</label>
+<textarea id="pubtxt" rows="3" readonly class="mono" style="font-size:12px"></textarea><div class="row"><button class="s" onclick="dl('license.pub',$('pubtxt').value,'text/plain')">⬇ Download license.pub</button><button class="s" onclick="cp($('pubtxt').value)">Copy</button></div></div>
+<div class="warn">🔐 The private key file is the only way to make activation keys. <b>Back it up</b> (USB + another place). If someone gets the file AND the passphrase they can issue keys; if you lose it you cannot issue new ones for firmware that holds this public key.</div></div>
+
+<div class="card"><h2><span class="n">2</span> Create an Activation Key</h2>
+<p class="h">The customer opens <b>Admin → Maintenance → Activation License Key</b> and sends you the Hardware ID.</p>
+<label>Hardware ID from the router</label><input id="hw" class="mono" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false" oninput="hwChk()">
+<div id="hwm" class="msg"></div>
+<label>Customer / note (optional — only kept in your list below)</label><input id="nt" placeholder="e.g. Juan – Brgy. Mabuhay site">
+<button id="gb" onclick="gen()" disabled>Generate Activation Key</button>
+<div id="res" style="display:none"><div class="out mono" id="key"></div><div class="row"><button class="s" onclick="cp($('key').dataset.k)">Copy key</button></div>
+<p class="h" style="margin-top:8px">Send this key to the customer. It only works on the router with this exact Hardware ID.</p></div></div>
+
+<div class="card"><h2>Issued keys <small style="color:var(--m);font-weight:400">(saved in this browser)</small></h2>
+<table><thead><tr><th>Date</th><th>Customer / note</th><th>Hardware ID</th><th></th></tr></thead><tbody id="log"></tbody></table>
+<div class="row"><button class="s" onclick="csv()">⬇ Download list (CSV)</button><button class="s" onclick="clr()">Clear list</button></div></div>
+</div>
+<script>
+/*CORE*/
+/* PisoWiFi license core - Ed25519 via the browser's built-in WebCrypto. Nothing here talks to a network.
+   Layout is the same as OpenWrt's `usign` files, so the router verifies keys with `usign -V`:
+   public key file = "Ed" + keynum(8) + publicKey(32)   |   activation key payload = "Ed" + keynum(8) + signature(64)
+   Signed text = "PWLIC1:" + HARDWARE ID (20 hex).   Activation key = "PWL1-" + base64url(payload)  (99 characters after the prefix). */
+const enc=new TextEncoder();
+const b64=u=>{let s='';for(const c of u)s+=String.fromCharCode(c);return btoa(s)};
+const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+const b64u=u=>b64(u).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64u=t=>unb64(t.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-t.length%4)%4));
+const hex=u=>[...u].map(x=>x.toString(16).padStart(2,'0')).join('');
+const normHw=t=>{const h=String(t||'').toUpperCase().replace(/[^0-9A-F]/g,'');return h.length===20?h:null};
+const fmtHw=h=>h.match(/.{5}/g).join('-');
+async function newKeyPair(){
+  const kp=await crypto.subtle.generateKey({name:'Ed25519'},true,['sign','verify']);
+  return{pub:new Uint8Array(await crypto.subtle.exportKey('raw',kp.publicKey)),
+         pk8:new Uint8Array(await crypto.subtle.exportKey('pkcs8',kp.privateKey)),
+         keynum:crypto.getRandomValues(new Uint8Array(8))};
+}
+function pubFileText(pub,keynum,note){const b=new Uint8Array(42);b.set([69,100],0);b.set(keynum,2);b.set(pub,10);
+  return 'untrusted comment: '+(note||'pisowifi license public key')+'\n'+b64(b)+'\n'}
+function parsePubFile(t){const l=String(t).trim().split(/\r?\n/);const b=unb64(l[l.length-1].trim());
+  if(b.length!==42||b[0]!==69||b[1]!==100)throw new Error('not a usign public key');return{keynum:b.slice(2,10),pub:b.slice(10)}}
+/* private key file: PKCS8 key encrypted with the owner's passphrase (PBKDF2-SHA256 -> AES-256-GCM) */
+async function kdf(pass,salt,iter){const m=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt,iterations:iter},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function packPrivate(kp,pass){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),iter=300000;
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await kdf(pass,salt,iter),kp.pk8));
+  return{app:'pisowifi-license-private-key',v:1,kdf:'PBKDF2-SHA256',iter,salt:b64(salt),iv:b64(iv),ct:b64(ct),keynum:hex(kp.keynum),pub:b64(kp.pub)}}
+async function unpackPrivate(o,pass){if(!o||o.app!=='pisowifi-license-private-key')throw new Error('format');
+  let pk8;try{pk8=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.iv)},await kdf(pass,unb64(o.salt),o.iter),unb64(o.ct)))}catch(e){throw new Error('passphrase')}
+  return{pk8,keynum:Uint8Array.from(o.keynum.match(/../g),x=>parseInt(x,16)),pub:unb64(o.pub)}}
+async function makeKey(kp,hw){const priv=await crypto.subtle.importKey('pkcs8',kp.pk8,{name:'Ed25519'},false,['sign']);
+  const sig=new Uint8Array(await crypto.subtle.sign('Ed25519',priv,enc.encode('PWLIC1:'+hw)));
+  const b=new Uint8Array(74);b.set([69,100],0);b.set(kp.keynum,2);b.set(sig,10);return 'PWL1-'+b64u(b)}
+/* what the router does (usign -V): same key id, valid Ed25519 signature over "PWLIC1:<its own hardware id>" */
+async function routerVerify(pubFile,key,hw){try{
+  const P=parsePubFile(pubFile);let k=String(key).replace(/\s+/g,'');if(k.startsWith('PWL1-'))k=k.slice(5);
+  if(!/^[A-Za-z0-9_=+\/-]+$/.test(k)||k.replace(/=/g,'').length!==99)return 'format';
+  const b=unb64u(k.replace(/=/g,''));if(b.length!==74||b[0]!==69||b[1]!==100)return 'format';
+  if(hex(b.slice(2,10))!==hex(P.keynum))return 'bad';
+  const pk=await crypto.subtle.importKey('raw',P.pub,{name:'Ed25519'},false,['verify']);
+  return await crypto.subtle.verify('Ed25519',pk,b.slice(10),enc.encode('PWLIC1:'+hw))?'ok':'bad'}catch(e){return 'format'}}
+/*ENDCORE*/
+
+const $=id=>document.getElementById(id);let KP=null;
+if(!(window.crypto&&crypto.subtle))$('nocrypto').style.display='block';
+function mode(m){$('pN').style.display=m=='N'?'':'none';$('pO').style.display=m=='O'?'':'none';$('tN').className=m=='N'?'on':'';$('tO').className=m=='O'?'on':''}
+function msg(t,c){const e=$('kmsg');e.textContent=t;e.className='msg '+(c||'')}
+function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m||'text/plain'}));a.download=n;document.body.appendChild(a);a.click();a.remove()}
+function cp(t){try{navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}}
+function unlocked(kp,fresh){KP=kp;$('kst').textContent='unlocked · key id '+hex(kp.keynum);$('kst').className='pill ok';
+  $('pubtxt').value=pubFileText(kp.pub,kp.keynum,'pisowifi license public key');$('pubbox').style.display='';hwChk();
+  msg(fresh?'✔ Key pair created. The private key file was downloaded — store it safely. Download license.pub below and put it into the firmware.':'✔ Private key unlocked.','o')}
+async function mkPair(){const a=$('p1').value;if(a.length<8)return msg('Passphrase must be at least 8 characters.','e');if(a!==$('p2').value)return msg('The two passphrases are different.','e');
+  try{const kp=await newKeyPair();const o=await packPrivate(kp,a);dl('pisowifi-license-PRIVATE.json',JSON.stringify(o,null,1),'application/json');unlocked(kp,true);$('p1').value=$('p2').value=''}catch(e){msg('Could not create the key: '+e.message,'e')}}
+async function openPair(){const f=$('pf').files[0];if(!f)return msg('Choose your private key file first.','e');
+  try{const o=JSON.parse(await f.text());unlocked(await unpackPrivate(o,$('p3').value),false);$('p3').value=''}catch(e){msg(e.message=='passphrase'?'Wrong passphrase.':'This is not a PisoWiFi private key file.','e')}}
+function hwChk(){$('res').style.display='none';const h=normHw($('hw').value),m=$('hwm');if(!$('hw').value.trim()){m.textContent='';$('gb').disabled=true;return}
+  if(h){m.textContent='✔ Valid Hardware ID '+fmtHw(h);m.className='msg o'}else{m.textContent='A Hardware ID has 20 letters/digits (0-9, A-F), e.g. 0A1B2-C3D4E-5F601-72839.';m.className='msg e'}$('gb').disabled=!(h&&KP)}
+const LK='pwlic_log';const getLog=()=>{try{return JSON.parse(localStorage.getItem(LK)||'[]')}catch(e){return[]}};
+function draw(){const L=getLog();$('log').innerHTML=L.length?L.map((x,i)=>`<tr><td>${x.d}</td><td>${x.n.replace(/[<>&]/g,'')}</td><td class="mono">${fmtHw(x.h)}</td><td><button class="s" style="margin:0;padding:4px 10px" onclick="cp(getLog()[${i}].k)">Copy key</button></td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--m)">Nothing yet.</td></tr>'}
+async function gen(){const h=normHw($('hw').value);if(!h||!KP)return;
+  const k=await makeKey(KP,h);
+  /* self-check exactly like the router does, before the key leaves this app */
+  if(await routerVerify(pubFileText(KP.pub,KP.keynum),k,h)!=='ok')return msg('Self-check failed - key not issued.','e');
+  $('key').textContent=k;$('key').dataset.k=k;$('res').style.display='';
+  const L=getLog();L.unshift({d:new Date().toISOString().slice(0,16).replace('T',' '),n:$('nt').value.trim()||'-',h,k});try{localStorage.setItem(LK,JSON.stringify(L))}catch(e){}draw()}
+function csv(){const L=getLog();dl('issued-keys.csv','date,customer,hardware_id,activation_key\n'+L.map(x=>[x.d,'"'+x.n.replace(/"/g,'""')+'"',fmtHw(x.h),x.k].join(',')).join('\n')+'\n','text/csv')}
+function clr(){if(confirm('Delete the list of issued keys from this browser?')){try{localStorage.removeItem(LK)}catch(e){}draw()}}
+draw();
+</script></body></html>
